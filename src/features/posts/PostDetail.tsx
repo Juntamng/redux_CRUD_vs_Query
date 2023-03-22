@@ -1,5 +1,10 @@
-import React, { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import {
+  useDeletePostMutation,
+  useGetPostQuery,
+  useUpdatePostMutation,
+} from '../../app/services/posts'
 import {
   Box,
   Button,
@@ -11,10 +16,7 @@ import {
   Spacer,
   Stack,
   useToast,
-} from "@chakra-ui/react";
-import { useAppDispatch, useAppSelector } from "../../hooks";
-import { getPostById, LoadingType } from "../../reducer/posts.slice";
-import { deletePost, updatePost } from "../../reducer/posts.extra";
+} from '@chakra-ui/react'
 
 const EditablePostName = ({
   name: initialName,
@@ -22,19 +24,19 @@ const EditablePostName = ({
   onCancel,
   isLoading = false,
 }: {
-  name: string;
-  onUpdate: (name: string) => void;
-  onCancel: () => void;
-  isLoading?: boolean;
+  name: string
+  onUpdate: (name: string) => void
+  onCancel: () => void
+  isLoading?: boolean
 }) => {
-  const [name, setName] = useState(initialName);
+  const [name, setName] = useState(initialName)
 
   const handleChange = ({
     target: { value },
-  }: React.ChangeEvent<HTMLInputElement>) => setName(value);
+  }: React.ChangeEvent<HTMLInputElement>) => setName(value)
 
-  const handleUpdate = () => onUpdate(name);
-  const handleCancel = () => onCancel();
+  const handleUpdate = () => onUpdate(name)
+  const handleCancel = () => onCancel()
 
   return (
     <Flex>
@@ -56,32 +58,35 @@ const EditablePostName = ({
         </Stack>
       </Box>
     </Flex>
-  );
-};
+  )
+}
 
 const PostJsonDetail = ({ id }: { id: string }) => {
-  const post = useAppSelector(getPostById(id));
+  const { data: post } = useGetPostQuery(id)
 
   return (
     <Box mt={5} bg="#eee">
       <pre>{JSON.stringify(post, null, 2)}</pre>
     </Box>
-  );
-};
+  )
+}
 
 export const PostDetail = () => {
-  const navigate = useNavigate();
-  const { id } = useParams<{ id: any }>();
-  const dispatch = useAppDispatch();
-  const post = useAppSelector(getPostById(id));
-  const isPending =
-    useAppSelector((state) => state.posts.loading) === LoadingType.pending;
-  const toast = useToast();
+  const { id } = useParams<{ id: any }>()
+  const navigate = useNavigate()
 
-  const [isEditing, setIsEditing] = useState(false);
+  const toast = useToast()
 
-  if (isPending) {
-    return <div>Loading...</div>;
+  const [isEditing, setIsEditing] = useState(false)
+
+  const { data: post, isLoading } = useGetPostQuery(id)
+
+  const [updatePost, { isLoading: isUpdating }] = useUpdatePostMutation()
+
+  const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation()
+
+  if (isLoading) {
+    return <div>Loading...</div>
   }
 
   if (!post) {
@@ -91,7 +96,7 @@ export const PostDetail = () => {
           Post {id} is missing! Try reloading or selecting another post...
         </Heading>
       </Center>
-    );
+    )
   }
 
   return (
@@ -101,22 +106,21 @@ export const PostDetail = () => {
           name={post.name}
           onUpdate={async (name) => {
             try {
-              dispatch(updatePost({ id, name }));
-              // await updatePost({ id, name }).unwrap()
+              await updatePost({ id, name }).unwrap()
             } catch {
               toast({
-                title: "An error occurred",
+                title: 'An error occurred',
                 description: "We couldn't save your changes, try again!",
-                status: "error",
+                status: 'error',
                 duration: 2000,
                 isClosable: true,
-              });
+              })
             } finally {
-              setIsEditing(false);
+              setIsEditing(false)
             }
           }}
           onCancel={() => setIsEditing(false)}
-          isLoading={isPending}
+          isLoading={isUpdating}
         />
       ) : (
         <Flex>
@@ -126,18 +130,18 @@ export const PostDetail = () => {
           <Spacer />
           <Box>
             <Stack spacing={4} direction="row" align="center">
-              <Button onClick={() => setIsEditing(true)} disabled={isPending}>
-                {isPending ? "Updating..." : "Edit"}
+              <Button
+                onClick={() => setIsEditing(true)}
+                disabled={isDeleting || isUpdating}
+              >
+                {isUpdating ? 'Updating...' : 'Edit'}
               </Button>
               <Button
-                onClick={async () => {
-                  await dispatch(deletePost(id));
-                  navigate("/posts");
-                }}
-                disabled={isPending}
+                onClick={() => deletePost(id).then(() => navigate('/posts'))}
+                disabled={isDeleting}
                 colorScheme="red"
               >
-                {isPending ? "Deleting..." : "Delete"}
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </Button>
             </Stack>
           </Box>
@@ -145,5 +149,5 @@ export const PostDetail = () => {
       )}
       <PostJsonDetail id={post.id} />
     </Box>
-  );
-};
+  )
+}

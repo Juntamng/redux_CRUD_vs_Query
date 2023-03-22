@@ -16,48 +16,44 @@ import {
   StatLabel,
   StatNumber,
   useToast,
-} from "@chakra-ui/react";
-import { MdBook } from "react-icons/md";
-import React, { useState } from "react";
-import { Route, Routes, useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../hooks";
+} from '@chakra-ui/react'
+import { MdBook } from 'react-icons/md'
+import React, { useState } from 'react'
+import { Route, Routes, useNavigate } from 'react-router-dom'
 import {
   Post,
-  LoadingType,
-  selectCount,
-  getAllPosts,
-} from "../../reducer/posts.slice";
-import { addPost, fetchPosts } from "../../reducer/posts.extra";
-import { PostDetail } from "./PostDetail";
+  useAddPostMutation,
+  useGetPostsQuery,
+} from '../../app/services/posts'
+import { PostDetail } from './PostDetail'
 
 const AddPost = () => {
-  const dispatch = useAppDispatch();
-  const initialValue = { name: "" };
-  const [post, setPost] = useState<Pick<Post, "name">>(initialValue);
-  // const [addPost, { isLoading }] = useAddPostMutation()
-  const toast = useToast();
+  const initialValue = { name: '' }
+  const [post, setPost] = useState<Pick<Post, 'name'>>(initialValue)
+  const [addPost, { isLoading }] = useAddPostMutation()
+  const toast = useToast()
 
   const handleChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => {
     setPost((prev) => ({
       ...prev,
       [target.name]: target.value,
-    }));
-  };
+    }))
+  }
 
   const handleAddPost = async () => {
     try {
-      await dispatch(addPost(post));
-      setPost(initialValue);
+      await addPost(post).unwrap()
+      setPost(initialValue)
     } catch {
       toast({
-        title: "An error occurred",
+        title: 'An error occurred',
         description: "We couldn't save your post, try again!",
-        status: "error",
+        status: 'error',
         duration: 2000,
         isClosable: true,
-      });
+      })
     }
-  };
+  }
 
   return (
     <Flex p={5}>
@@ -78,33 +74,26 @@ const AddPost = () => {
         <Button
           mt={8}
           colorScheme="purple"
-          // isLoading={isLoading}
+          isLoading={isLoading}
           onClick={handleAddPost}
         >
           Add Post
         </Button>
       </Box>
     </Flex>
-  );
-};
+  )
+}
 
 const PostList = () => {
-  const dispatch = useAppDispatch();
-  const loading = useAppSelector((state) => state.posts.loading);
-  const posts = useAppSelector(getAllPosts);
-  const navigate = useNavigate();
+  const { data: posts, isLoading } = useGetPostsQuery()
+  const navigate = useNavigate()
 
-  if (loading === LoadingType.idle) {
-    dispatch(fetchPosts());
-    return <div>Loading</div>;
-  }
-
-  if (loading === LoadingType.pending) {
-    return <div>Loading</div>;
+  if (isLoading) {
+    return <div>Loading</div>
   }
 
   if (!posts) {
-    return <div>No posts :(</div>;
+    return <div>No posts :(</div>
   }
 
   return (
@@ -115,19 +104,21 @@ const PostList = () => {
         </ListItem>
       ))}
     </List>
-  );
-};
+  )
+}
 
 export const PostsCountStat = () => {
-  const count = useAppSelector(selectCount);
+  const { data: posts } = useGetPostsQuery()
+
+  if (!posts) return null
 
   return (
     <Stat>
       <StatLabel>Active Posts</StatLabel>
-      <StatNumber>{count}</StatNumber>
+      <StatNumber>{posts?.length}</StatNumber>
     </Stat>
-  );
-};
+  )
+}
 
 export const PostsManager = () => {
   return (
@@ -167,7 +158,7 @@ export const PostsManager = () => {
         </Box>
       </Flex>
     </Box>
-  );
-};
+  )
+}
 
-export default PostsManager;
+export default PostsManager
