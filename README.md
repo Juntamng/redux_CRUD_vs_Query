@@ -15,3 +15,9 @@
 ## In the project directory, you can run:
 
 ### `npm start`
+
+
+## References
+
+### https://redux.js.org/
+### https://redux-toolkit.js.org/
