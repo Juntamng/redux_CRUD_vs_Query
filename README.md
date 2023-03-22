@@ -1,4 +1,4 @@
-# demo Redux Toolkit
+# Demo Redux Toolkit
 
 ## method 1 - CRUD (main branch)
 
@@ -10,6 +10,8 @@
 
   - data is more up-today
 
-In the project directory, you can run:
+
+
+## In the project directory, you can run:
 
 ### `npm start`
